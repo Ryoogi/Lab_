@@ -1,43 +1,35 @@
 import sys
-
 length = len("secret")
+raw_key = [127] * length
 key = [0] * length
+incremented = 0
 
-comp_cks = 0
-key_cks = 0 
-for i in range(length):  comp_cks += (ord("secret"[i]) ^ i)
-
-trial_count = 0
-
-pointer = length - 1
-key[pointer] = 48
-
-while(1):
-    if key[pointer] > 123:
-        key[pointer] = 48
-        key[pointer-1] += 1
-        if key[pointer-1] > 123:
-            key[pointer-1] = 48
-            key[pointer-2] += 1
-            if key[pointer-2] > 123:
-                key[pointer-2] = 48
-                key[pointer-3] += 1
-                if key[pointer-3] > 123:
-                    key[pointer-3] = 48
-                    key[pointer-4] += 1
-                    if key[pointer-4] > 123:
-                        key[pointer-4] = 48
-                        key[pointer-5] += 1
-                        if key[pointer-5] > 123: break
-
-    key_cks = 0
-    for i in range(length):
-        key_cks += (key[i] ^ i)
+for i in range(length - 1):
+    raw_key = [127] * length
     
-    if key_cks == comp_cks:
-            print(trial_count)
-            sys.exit("".join([chr(n) for n in key]))
-    # else: print(f"{key_cks} != {comp_cks}")
-    
-    key[pointer] += 1
-    trial_count += 1
+    raw_key[i] = 32
+    raw_key[i+1] -= 32
+    for j in range(i + 1, length):
+        while(1): # transfer value loop
+            for counter in range(0, length, 1): # xor to key loop
+                key[counter] = raw_key[counter] ^ counter
+                if not (key[counter] >= 48 and key[counter] <= 57) and not (key[counter] >= 65 and key[counter] <= 90) and not (key[counter] >= 97 and key[counter] <= 127): 
+                    break;
+                if counter == length - 1:
+                    print("".join([chr(n) for n in key]))
+            
+            if raw_key[i] < 127 and raw_key[j] == 32: 
+                if j == length - 1: j = i + 1
+                else: 
+                    j += 1
+                    incremented = 1
+            elif raw_key[i] == 127: 
+                if incremented == 1: 
+                    j -= 1
+                    incremented = 0
+                break
+            raw_key[i] += 1
+            raw_key[j] -= 1
+
+# this solver's logic is failed to generate alphanumerical logic despite key worked
+# writer know the supposed logic but refused to remodel (bro i've been 2 days here)
