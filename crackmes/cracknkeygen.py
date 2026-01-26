@@ -1,35 +1,26 @@
-import sys
+from z3 import *
+
+s = Solver()
 length = len("secret")
-raw_key = [127] * length
-key = [0] * length
-incremented = 0
 
-for i in range(length - 1):
-    raw_key = [127] * length
+raw_key = [BitVec(f'r_{i}', 8) for i in range(length)]
+key = [raw_key[i] ^ i for i in range(length)]
+
+for i in range(length):
+    char_code = key[i]
+    s.add(Or(
+        And(char_code >= 48, char_code <= 57),
+        And(char_code >= 65, char_code <= 90),
+        And(char_code >= 97, char_code <= 127)
+    ))
+    s.add(raw_key[i] >= 32, raw_key[i] <= 127)
+
+if s.check() == sat:
+    m = s.model()
     
-    raw_key[i] = 32
-    raw_key[i+1] -= 32
-    for j in range(i + 1, length):
-        while(1): # transfer value loop
-            for counter in range(0, length, 1): # xor to key loop
-                key[counter] = raw_key[counter] ^ counter
-                if not (key[counter] >= 48 and key[counter] <= 57) and not (key[counter] >= 65 and key[counter] <= 90) and not (key[counter] >= 97 and key[counter] <= 127): 
-                    break;
-                if counter == length - 1:
-                    print("".join([chr(n) for n in key]))
-            
-            if raw_key[i] < 127 and raw_key[j] == 32: 
-                if j == length - 1: j = i + 1
-                else: 
-                    j += 1
-                    incremented = 1
-            elif raw_key[i] == 127: 
-                if incremented == 1: 
-                    j -= 1
-                    incremented = 0
-                break
-            raw_key[i] += 1
-            raw_key[j] -= 1
+    raw_result = "".join([chr(m[raw_key[i]].as_long()) for i in range(length)])
+    
+    key_result = "".join([chr(m.evaluate(key[i]).as_long()) for i in range(length)])
 
-# this solver's logic is failed to generate alphanumerical logic despite key worked
-# writer know the supposed logic but refused to remodel (bro i've been 2 days here)
+    print(f"Raw key: {raw_result}")
+    print(f"Key (XOR result): {key_result}")
